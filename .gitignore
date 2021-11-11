@@ -1,4 +1,4 @@
-./data/EAN/rdf_*
-./data/EAN/*_rdf_cn_an_cat_salt.txt
-./format_data.py
-./.vimspector.json
+data/EAN/rdf_*
+data/EAN/*_rdf_cn_an_cat_salt.txt
+format_data.py
+.vimspector.json
