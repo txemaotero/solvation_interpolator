@@ -5,20 +5,8 @@ information needed to build the interpolation functions.
 import json
 import numpy as np
 
+from dataclasses import dataclass
 from typing import Any, Dict, List, TypedDict, Set, Tuple, Union
-
-
-class CnrItemType(TypedDict):
-    """
-    TypedDict to store the information of the coordination number section.
-    """
-
-    q: float
-    fpath: str
-    column: int
-    header: str
-    distances: np.ndarray
-    cnr: np.ndarray
 
 
 class CnrFileItemType(TypedDict):
@@ -35,7 +23,7 @@ class ItemType(TypedDict):
     ionic_radius: float
     enthalpy: float
     enthalpy_md: float
-    cnrs: Dict[str, CnrItemType]
+    cnrs: "CoordNumbers"
 
 
 InfoType = Dict[str, ItemType]
@@ -143,30 +131,7 @@ class Information:
                         label
                     )
                 )
-            system["cnrs"] = CoordNumbers(system["cnrs"])
-            for mol_label, mol_data in system["cnrs"].items():
-                if isinstance(mol_data["fpath"], list):
-                    if len(mol_data["fpath"]) != 2:
-                        raise ValueError(
-                            "The information for the cnr file "
-                            "for the molecule {} is not correct".format(mol_label)
-                        )
-                    mol_data["column"] = mol_data["fpath"][1]
-                    mol_data["fpath"] = mol_data["fpath"][0]
-                else:
-                    mol_data["column"] = 1
-
-                # Check if there is a header in the file
-                with open(mol_data["fpath"], "r") as f:
-                    first_line = f.readline()
-                    if first_line.startswith("#"):
-                        mol_data["header"] = first_line.strip()
-                    else:
-                        mol_data["header"] = None
-                # Read data
-                mol_data["distances"], mol_data["cnr"] = np.loadtxt(
-                    mol_data["fpath"], usecols=[0, mol_data["column"]]
-                ).T
+            system["cnrs"] = CoordNumbers(label, system["cnrs"])
 
         return data
 
@@ -213,7 +178,7 @@ class Information:
         headers = []
         for system in self.data.values():
             for mol_data in system["cnrs"].values():
-                headers.append(mol_data["header"])
+                headers.append(mol_data.header)
         return headers
 
     @property
@@ -232,6 +197,74 @@ class Information:
             electric_fields.append(system["Q"] / system["ionic_radius"] ** 2)
         return electric_fields
 
+    @property
+    def distances(self) -> np.ndarray:
+        """
+        Get the distances of the cnr files.
+
+        It checks that all the cnr files have the same distances.
+
+        Returns
+        -------
+        distances : list
+            The distances of the cnr files.
+
+        """
+        distances = None
+        for system in self.data.values():
+            if distances is None:
+                distances = system["cnrs"].distances
+            else:
+                aux_distances = system["cnrs"].distances
+                if (len(distances) != len(aux_distances)) or (not np.isclose(distances, aux_distances)):
+                    raise ValueError(
+                        "The cnr files should have the same distances"
+                    )
+        assert isinstance(distances, np.ndarray)
+        return distances
+
+
+@dataclass
+class CoordNumber:
+    """
+    Class to store a coordination number a molecule.
+
+    Parameters
+    ----------
+    fpath : str
+        The path to the file with the cnr.
+    column : int
+        The column in the file with the cnr.
+    header : str
+        The header of the file with the cnr.
+    charge : int
+        The charge of the molecule.
+    distances : np.ndarray
+        The distances between the metal of the molecule.
+    cnr : np.ndarray
+        The coordination number at each distance.
+
+    """
+    fpath: str
+    column: int
+    header: str
+    charge: int
+    distances: np.ndarray
+    cnr: np.ndarray
+
+    @property
+    def charge_distribution(self) -> np.ndarray:
+        """
+        Get charge*cnr.
+
+        Returns
+        -------
+        charge_distribution : np.ndarray
+            The charge distribution.
+
+        """
+        return self.charge * self.cnr
+
 
 class CoordNumbers:
     """
@@ -246,13 +279,14 @@ class CoordNumbers:
 
     """
 
-    def __init__(self, cnrs: Dict[str, CnrFileItemType]):
+    def __init__(self, label: str, cnrs: Dict[str, CnrFileItemType]):
+        self.label = label
         self.cnrs = self._validate(cnrs)
 
-    def _validate(self, cnrs: Dict[str, CnrFileItemType]) -> Dict[str, CnrItemType]:
+    def _validate(self, cnrs: Dict[str, CnrFileItemType]) -> Dict[str, CoordNumber]:
         system = {}
         for mol_label, mol_data in cnrs.items():
-            system[mol_label] = aux = {}
+            aux = {}
             if isinstance(mol_data["fpath"], list):
                 if len(mol_data["fpath"]) != 2:
                     raise ValueError(
@@ -275,9 +309,10 @@ class CoordNumbers:
             aux["distances"], aux["cnr"] = np.loadtxt(
                 aux["fpath"], usecols=[0, aux["column"]]
             ).T
+            system[mol_label] = CoordNumber(**aux)
         return system
 
-    def __getitem__(self, key: str) -> CnrItemType:
+    def __getitem__(self, key: str) -> CoordNumber:
         """
         Get the coordination numbers for the molecule with the given label.
 
@@ -294,7 +329,19 @@ class CoordNumbers:
         """
         return self.cnrs[key]
 
-    def values(self) -> List[CnrItemType]:
+    def keys(self) -> List[str]:
+        """
+        Get the labels of the molecules.
+
+        Returns
+        -------
+        labels : list
+            The labels of the molecules.
+
+        """
+        return list(self.cnrs.keys())
+
+    def values(self) -> List[CoordNumber]:
         """
         Get the coordination numbers for all the molecules.
 
@@ -306,7 +353,50 @@ class CoordNumbers:
         """
         return list(self.cnrs.values())
 
+    @property
+    def total_charge_distribution(self) -> np.ndarray:
+        """
+        Get the total charge distribution.
+
+        Returns
+        -------
+        total_charge_distribution : np.ndarray
+            The total charge density.
+
+        """
+        return np.sum([cnr.charge_distribution for cnr in self.cnrs.values()], axis=0)
+
+    @property
+    def distances(self) -> np.ndarray:
+        """
+        Get the distances of the cnr files.
+
+        It checks that all the cnr files have the same distances.
+
+        Returns
+        -------
+        distances : np.ndarray
+            The distances of the cnr files.
+
+        """
+        distances = None
+        for cnr in self.cnrs.values():
+            if distances is None:
+                distances = cnr.distances
+            else:
+                aux_distances = cnr.distances
+                if (len(distances) != len(aux_distances)) or (not np.isclose(distances, aux_distances)):
+                    raise ValueError(
+                        f"The cnr for {self.label} don't have the same dimensions"
+                    )
+        if not isinstance(distances, np.ndarray):
+            raise ValueError(f"There are no cnr data for {self.label}")
+        return distances
+
 
 if __name__ == "__main__":
     info = Information("./info_ean.json")
+
     print(info["Li"])
+
+    print('Hola')

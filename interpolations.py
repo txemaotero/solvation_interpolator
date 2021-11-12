@@ -26,28 +26,22 @@ class Interpolation:
         Get the interpolator funciton for the coordination numbers of each mol type.
         """
         interpolators = {}
-        # We need electric field and cnrs
+        # We need electric field, distances and cnrs
         electric_fields = self.information.electric_fields
+        distances = self.information.distances
         for mol_label in self.information.mol_labels:
-            cnrs, distances = [], None
-            for data in self.information.values():
-                mol_data = data["cnrs"][mol_label]
-                if distances is None:
-                    distances = mol_data["distances"]
-                cnrs.append(mol_data["cnr"])
-
+            cnrs = [data["cnrs"][mol_label].cnr for data in self.information.values()]
             interpolators[mol_label] = interp2d(
                 distances, electric_fields, cnrs, kind=self.kind
             )
-
         return interpolators
 
     def _get_delta_n_interpolator(self) -> Callable:
         """
-        Get the interpolator funciton for the sum of the coordination.
+        Get the interpolator funciton for the total charge distribution.
         """
         # We need electric field and delta_n
         electric_fields = self.information.electric_fields
-        delta_ns = []
-
-        return interp2d(distances, electric_fields, delta_ns, kind=self.kind)
+        distances = self.information.distances
+        tot_charg_dens = [s["cnrs"].total_charge_distribution for s in self.information.values()]
+        return interp2d(distances, electric_fields, tot_charg_dens, kind=self.kind)
