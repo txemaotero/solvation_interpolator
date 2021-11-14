@@ -49,11 +49,6 @@ if __name__ == "__main__":
         interpolation.enthalpy(args.R, args.Q),
     )
 
-    if args.rdf is not None:
-        data = interpolation.rdf(args.R, args.Q)
-        header = information.headers[0]
-        np.savetxt(args.rdf, data, header=header)
-
     if args.coord is not None:
         data = interpolation.coordination_number(args.R, args.Q)
         header = information.headers[0]

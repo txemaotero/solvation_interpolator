@@ -4,6 +4,9 @@ information needed to build the interpolation functions.
 """
 import json
 import numpy as np
+from scipy.integrate import cumtrapz
+from scipy.optimize import curve_fit
+from scipy import constants
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, TypedDict, Set, Tuple, Union
@@ -27,6 +30,31 @@ class ItemType(TypedDict):
 
 
 InfoType = Dict[str, ItemType]
+
+
+NANO_TO_METER_INVERSE = 1e9
+JUL_TO_KILOJ = 1e-3
+FACTOR_ENERGY = (
+    JUL_TO_KILOJ
+    * NANO_TO_METER_INVERSE
+    * constants.Avogadro
+    * constants.elementary_charge ** 2
+    / 4
+    / np.pi
+    / constants.epsilon_0
+)
+
+
+def _to_fit(x: np.ndarray, a: float, alpha: float, b: float)-> np.ndarray:
+    return a * x ** alpha + b
+
+
+def _calc_integral(x: np.ndarray, y: np.ndarray) -> float:
+    integral = cumtrapz(y, x=x, initial=0)
+    mask = x > 1.8  # TODO: check this value
+    xf, yf = x[mask], integral[mask]
+    popt, _ = curve_fit(_to_fit, xf, yf, p0=(1, -1.2, -1))
+    return popt[-1]
 
 
 class Decoder(json.JSONDecoder):
@@ -168,12 +196,6 @@ class Information:
     def headers(self) -> List[str]:
         """
         Get the headers of the cnr files.
-
-        Returns
-        -------
-        headers : list
-            The headers of the cnr files.
-
         """
         headers = []
         for system in self.data.values():
@@ -182,20 +204,49 @@ class Information:
         return headers
 
     @property
-    def electric_fields(self) -> List[float]:
+    def charges(self) -> np.ndarray:
+        """
+        Charges of the cations.
+        """
+        return np.array([system["Q"] for system in self.data.values()])
+
+    @property
+    def radius(self) -> np.ndarray:
+        """
+        Radii of the cations.
+        """
+        return np.array([system["ionic_radius"] for system in self.data.values()])
+
+    @property
+    def electric_fields(self) -> np.ndarray:
         """
         Get the values of Q/ionic_radius**2.
-
-        Returns
-        -------
-        electric_fields : list
-            The electric fields.
-
         """
-        electric_fields = []
-        for system in self.data.values():
-            electric_fields.append(system["Q"] / system["ionic_radius"] ** 2)
-        return electric_fields
+        return self.charges / self.radius ** 2
+
+    @property
+    def enthalpies(self) -> np.ndarray:
+        """
+        Get the enthalpies of the systems.
+        """
+        return np.array(
+            [
+                system["enthalpy"] if system["enthalpy"] is not None else np.nan
+                for system in self.data.values()
+            ]
+        )
+
+    @property
+    def enthalpies_md(self) -> np.ndarray:
+        """
+        Get the enthalpies from MD of the systems.
+        """
+        return np.array(
+            [
+                system["enthalpy_md"] if system["enthalpy_md"] is not None else np.nan
+                for system in self.data.values()
+            ]
+        )
 
     @property
     def distances(self) -> np.ndarray:
@@ -203,12 +254,6 @@ class Information:
         Get the distances of the cnr files.
 
         It checks that all the cnr files have the same distances.
-
-        Returns
-        -------
-        distances : list
-            The distances of the cnr files.
-
         """
         distances = None
         for system in self.data.values():
@@ -216,10 +261,10 @@ class Information:
                 distances = system["cnrs"].distances
             else:
                 aux_distances = system["cnrs"].distances
-                if (len(distances) != len(aux_distances)) or (not np.isclose(distances, aux_distances)):
-                    raise ValueError(
-                        "The cnr files should have the same distances"
-                    )
+                if (len(distances) != len(aux_distances)) or (
+                    not np.isclose(distances, aux_distances)
+                ):
+                    raise ValueError("The cnr files should have the same distances")
         assert isinstance(distances, np.ndarray)
         return distances
 
@@ -245,6 +290,7 @@ class CoordNumber:
         The coordination number at each distance.
 
     """
+
     fpath: str
     column: int
     header: str
@@ -356,15 +402,19 @@ class CoordNumbers:
     @property
     def total_charge_distribution(self) -> np.ndarray:
         """
-        Get the total charge distribution.
-
-        Returns
-        -------
-        total_charge_distribution : np.ndarray
-            The total charge density.
-
+        Get the total charge distribution at certain distance.
         """
         return np.sum([cnr.charge_distribution for cnr in self.cnrs.values()], axis=0)
+
+    @property
+    def electrostatic_work(self) -> float:
+        """
+        Get the electrostatic work.
+        """
+        distances = self.distances
+        return FACTOR_ENERGY * _calc_integral(
+            distances, self.total_charge_distribution / distances ** 2
+        )
 
     @property
     def distances(self) -> np.ndarray:
@@ -373,11 +423,6 @@ class CoordNumbers:
 
         It checks that all the cnr files have the same distances.
 
-        Returns
-        -------
-        distances : np.ndarray
-            The distances of the cnr files.
-
         """
         distances = None
         for cnr in self.cnrs.values():
@@ -385,7 +430,9 @@ class CoordNumbers:
                 distances = cnr.distances
             else:
                 aux_distances = cnr.distances
-                if (len(distances) != len(aux_distances)) or (not np.isclose(distances, aux_distances)):
+                if (len(distances) != len(aux_distances)) or (
+                    not np.isclose(distances, aux_distances)
+                ):
                     raise ValueError(
                         f"The cnr for {self.label} don't have the same dimensions"
                     )
@@ -399,4 +446,4 @@ if __name__ == "__main__":
 
     print(info["Li"])
 
-    print('Hola')
+    print("Hola")
