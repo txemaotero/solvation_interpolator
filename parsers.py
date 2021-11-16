@@ -51,9 +51,9 @@ def _get_index_to_fit(data: np.ndarray) -> int:
     value to the one corresponding a variation under the 10% of the max value
     of data.
     """
-    variation = (max(data) - min(data)) * 0.1
-    index = int(np.argmax((data - data[-1])[::-1] < variation))
-    return len(data) - index - 1
+    variation = abs(max(data) - min(data)) * 0.1
+    index = int(np.argmax(np.abs((data - data[-1])[::-1]) > variation))
+    return len(data) - index
 
 
 def _to_fit(x: np.ndarray, a: float, alpha: float, b: float) -> np.ndarray:
