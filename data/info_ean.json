@@ -1,181 +1,181 @@
 {
   "Li": {
     "Q": 1,
-    "ionic_radius": 0.6,
+    "ionic_radius": 0.59,
     "enthalpy": -505.71,
     "enthalpy_md": -695.7,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_LI_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_LI_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_LI_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_LI_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_LI_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_LI_anion_cation_metal.txt", 3]
       }
     }
   },
   "Na": {
     "Q": 1,
-    "ionic_radius": 0.95,
+    "ionic_radius": 0.99,
     "enthalpy": null,
     "enthalpy_md": -444.7,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_NA_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_NA_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_NA_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_NA_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_NA_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_NA_anion_cation_metal.txt", 3]
       }
     }
   },
   "K": {
     "Q": 1,
-    "ionic_radius": 1.33,
+    "ionic_radius": 1.37,
     "enthalpy": -339.34,
     "enthalpy_md": -379.7,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_K_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_K_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_K_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_K_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_K_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_K_anion_cation_metal.txt", 3]
       }
     }
   },
   "Rb": {
     "Q": 1,
-    "ionic_radius": 1.48,
+    "ionic_radius": 1.52,
     "enthalpy": -312.23,
     "enthalpy_md": -361.7,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_RB_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_RB_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_RB_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_RB_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_RB_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_RB_anion_cation_metal.txt", 3]
       }
     }
   },
   "Cs": {
     "Q": 1,
-    "ionic_radius": 1.14,
+    "ionic_radius": 1.67,
     "enthalpy": -288.93,
     "enthalpy_md": -300.7,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_CS_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_CS_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_CS_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_CS_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_CS_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_CS_anion_cation_metal.txt", 3]
       }
     }
   },
   "Mg": {
     "Q": 2,
-    "ionic_radius": 1.14,
+    "ionic_radius": 0.57,
     "enthalpy": -1762.13,
     "enthalpy_md": -1962.4,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_MAG_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_MAG_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_MAG_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_MAG_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 2,
-        "fpath": ["./data/EAN/cnr_MAG_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_MAG_anion_cation_metal.txt", 3]
       }
     }
   },
   "Ca": {
     "Q": 2,
-    "ionic_radius": 1.14,
+    "ionic_radius": 1.00,
     "enthalpy": -1506.93,
     "enthalpy_md": -1505.4,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_CAL_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_CAL_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_CAL_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_CAL_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 2,
-        "fpath": ["./data/EAN/cnr_CAL_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_CAL_anion_cation_metal.txt", 3]
       }
     }
   },
   "Sr": {
     "Q": 2,
-    "ionic_radius": 1.14,
+    "ionic_radius": 1.18,
     "enthalpy": null,
     "enthalpy_md": -1511.4,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_SR_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_SR_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_SR_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_SR_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 2,
-        "fpath": ["./data/EAN/cnr_SR_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_SR_anion_cation_metal.txt", 3]
       }
     }
   },
   "Ba": {
     "Q": 2,
-    "ionic_radius": 1.14,
+    "ionic_radius": 1.35,
     "enthalpy": null,
     "enthalpy_md": -1298.4,
     "cnrs": {
       "anion": {
         "q": -1,
-        "fpath": ["./data/EAN/cnr_BA_anion_cation_metal.txt", 1]
+        "fpath": ["./EAN/cnr_BA_anion_cation_metal.txt", 1]
       },
       "cation": {
         "q": 1,
-        "fpath": ["./data/EAN/cnr_BA_anion_cation_metal.txt", 2]
+        "fpath": ["./EAN/cnr_BA_anion_cation_metal.txt", 2]
       },
       "metal": {
         "q": 2,
-        "fpath": ["./data/EAN/cnr_BA_anion_cation_metal.txt", 3]
+        "fpath": ["./EAN/cnr_BA_anion_cation_metal.txt", 3]
       }
     }
   }

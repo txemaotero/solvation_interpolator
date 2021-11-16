@@ -50,9 +50,13 @@ if __name__ == "__main__":
     )
 
     if args.coord is not None:
-        data = interpolation.coordination_number(args.R, args.Q)
-        header = information.headers[0]
-        np.savetxt(args.coord, data, header=header)
+        data = [information.distances]
+        header = ["Distance"]
+        for mol_label in information.mol_labels:
+            data.append(interpolation.coordination_number(args.R, args.Q, mol_label))
+            header.append(f"cnr({mol_label})")
+        header = '\t'.join(header)
+        np.savetxt(args.coord, np.array(data).T, header=header)
 
     if args.charge is not None:
         data = interpolation.charge_distribution(args.R, args.Q)

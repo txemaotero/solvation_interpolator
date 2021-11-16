@@ -45,16 +45,27 @@ FACTOR_ENERGY = (
 )
 
 
-def _to_fit(x: np.ndarray, a: float, alpha: float, b: float)-> np.ndarray:
+def _get_index_to_fit(data: np.ndarray) -> int:
+    """
+    Get the index of the data to fit the integral going back from the last
+    value to the one corresponding a variation under the 10% of the max value
+    of data.
+    """
+    variation = (max(data) - min(data)) * 0.1
+    index = int(np.argmax((data - data[-1])[::-1] < variation))
+    return len(data) - index - 1
+
+
+def _to_fit(x: np.ndarray, a: float, alpha: float, b: float) -> np.ndarray:
     return a * x ** alpha + b
 
 
 def _calc_integral(x: np.ndarray, y: np.ndarray) -> float:
     integral = cumtrapz(y, x=x, initial=0)
-    mask = x > 1.8  # TODO: check this value
-    xf, yf = x[mask], integral[mask]
-    popt, _ = curve_fit(_to_fit, xf, yf, p0=(1, -1.2, -1))
-    return popt[-1]
+    index_to_fit = _get_index_to_fit(integral)
+    xf, yf = x[index_to_fit:], integral[index_to_fit:]
+    result = curve_fit(_to_fit, xf, yf, p0=(1, -1.2, -1))
+    return result[0][-1]
 
 
 class Decoder(json.JSONDecoder):
@@ -211,18 +222,11 @@ class Information:
         return np.array([system["Q"] for system in self.data.values()])
 
     @property
-    def radius(self) -> np.ndarray:
-        """
-        Radii of the cations.
-        """
-        return np.array([system["ionic_radius"] for system in self.data.values()])
-
-    @property
     def electric_fields(self) -> np.ndarray:
         """
-        Get the values of Q/ionic_radius**2.
+        Get the values of Q/exclusion_radius**2.
         """
-        return self.charges / self.radius ** 2
+        return self.charges / self.exclusion_radii ** 2
 
     @property
     def enthalpies(self) -> np.ndarray:
@@ -246,6 +250,31 @@ class Information:
                 system["enthalpy_md"] if system["enthalpy_md"] is not None else np.nan
                 for system in self.data.values()
             ]
+        )
+
+    @property
+    def electrostatic_works(self) -> np.ndarray:
+        """
+        Get the electrostatic works of the systems.
+        """
+        return np.array(
+            [system["cnrs"].electrostatic_work for system in self.data.values()]
+        )
+
+    @property
+    def ionic_radii(self) -> np.ndarray:
+        """
+        Get the ionic radii of the systems.
+        """
+        return np.array([system["ionic_radius"] for system in self.data.values()])
+
+    @property
+    def exclusion_radii(self) -> np.ndarray:
+        """
+        Get the exclusion radii of the systems.
+        """
+        return np.array(
+            [system["cnrs"].exclusion_radius for system in self.data.values()]
         )
 
     @property
@@ -301,15 +330,16 @@ class CoordNumber:
     @property
     def charge_distribution(self) -> np.ndarray:
         """
-        Get charge*cnr.
-
-        Returns
-        -------
-        charge_distribution : np.ndarray
-            The charge distribution.
-
+        Returns charge * cnr.
         """
         return self.charge * self.cnr
+
+    @property
+    def exclusion_radius(self) -> float:
+        """
+        Get the distance at the cnr first non-zero.
+        """
+        return self.distances[np.nonzero(self.cnr)[0][0]]
 
 
 class CoordNumbers:
@@ -439,6 +469,13 @@ class CoordNumbers:
         if not isinstance(distances, np.ndarray):
             raise ValueError(f"There are no cnr data for {self.label}")
         return distances
+
+    @property
+    def exclusion_radius(self) -> float:
+        """
+        Get the minimum of the exclusion radius of all mol_types.
+        """
+        return min(v.exclusion_radius for v in self.values())
 
 
 if __name__ == "__main__":
