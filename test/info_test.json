@@ -1,0 +1,42 @@
+{
+  "Li": {
+    "Q": 1,
+    "ionic_radius": 0.59,
+    "enthalpy": -505.71,
+    "enthalpy_md": -695.7,
+    "cnrs": {
+      "anion": {
+        "q": -1,
+        "fpath": ["{path}/EAN/cnr_LI_anion_cation_metal.txt", 1]
+      },
+      "cation": {
+        "q": 1,
+        "fpath": ["{path}/EAN/cnr_LI_anion_cation_metal.txt", 2]
+      },
+      "metal": {
+        "q": 1,
+        "fpath": ["{path}/EAN/cnr_LI_anion_cation_metal.txt", 3]
+      }
+    }
+  },
+  "Na": {
+    "Q": 1,
+    "ionic_radius": 0.99,
+    "enthalpy": null,
+    "enthalpy_md": -444.7,
+    "cnrs": {
+      "anion": {
+        "q": -1,
+        "fpath": ["{path}/EAN/cnr_NA_anion_cation_metal.txt", 1]
+      },
+      "cation": {
+        "q": 1,
+        "fpath": ["{path}/EAN/cnr_NA_anion_cation_metal.txt", 2]
+      },
+      "metal": {
+        "q": 1,
+        "fpath": ["{path}/EAN/cnr_NA_anion_cation_metal.txt", 3]
+      }
+    }
+  }
+} 

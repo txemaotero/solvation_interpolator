@@ -385,6 +385,7 @@ class CoordNumbers:
             aux["distances"], aux["cnr"] = np.loadtxt(
                 aux["fpath"], usecols=[0, aux["column"]]
             ).T
+            aux["charge"] = mol_data["q"]
             system[mol_label] = CoordNumber(**aux)
         return system
 
@@ -461,7 +462,7 @@ class CoordNumbers:
             else:
                 aux_distances = cnr.distances
                 if (len(distances) != len(aux_distances)) or (
-                    not np.isclose(distances, aux_distances)
+                    not np.isclose(distances, aux_distances).all()
                 ):
                     raise ValueError(
                         f"The cnr for {self.label} don't have the same dimensions"
