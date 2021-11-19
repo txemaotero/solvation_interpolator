@@ -63,7 +63,7 @@ def coord_number() -> CoordNumber:
 
 
 @pytest.fixture
-def coord_numbers_info(json_path) -> CnrFileItemType:
+def coord_numbers_info(json_path: str) -> CnrFileItemType:
     """
     Fixture for CoordNumbers class.
     """
@@ -75,7 +75,7 @@ def coord_numbers_info(json_path) -> CnrFileItemType:
 
 
 @pytest.fixture
-def information(json_path):
+def information(json_path: str) -> Information:
     """
     Fixture for Information class.
     """
@@ -142,13 +142,16 @@ def test_coord_numbers(coord_numbers_info):
     coord_numbers = CoordNumbers("Li", coord_numbers_info)
     assert set(coord_numbers.keys()) == {"anion", "cation", "metal"}
     assert isinstance(coord_numbers["anion"], CoordNumber)
+    assert coord_numbers["anion"].charge == -1
+    assert coord_numbers["cation"].charge == 1
+    assert coord_numbers["metal"].charge == 1
     tot_char = coord_numbers.total_charge_distribution
     assert isinstance(tot_char, np.ndarray)
     assert tot_char.shape == (len(coord_numbers.distances),)
     assert len(coord_numbers.distances) == 1250
 
 
-def test_information(information):
+def test_information(information: Information):
     """
     Test the Information class.
     """
@@ -163,4 +166,14 @@ def test_information(information):
         "cnrs",
     }
     assert isinstance(information["Li"]["cnrs"], CoordNumbers)
-
+    assert information["Li"]["Q"] == 1
+    assert information["Li"]["enthalpy"] == -505.71
+    assert information["Li"]["enthalpy_md"] == -695.7
+    assert information["Li"]["ionic_radius"] == 0.59
+    assert isinstance(information.distances, np.ndarray)
+    assert len(information.distances) == len(information["Li"]["cnrs"]["anion"].cnr)
+    excl_rad = {k: v for k, v in zip(information.keys(), information.exclusion_radii)}
+    compare = {"Li": 0.186, "Na": 0.228}
+    assert excl_rad == compare
+    assert round(information["Li"]["cnrs"].electrostatic_work) == -825
+    assert round(information["Na"]["cnrs"].electrostatic_work) == -672

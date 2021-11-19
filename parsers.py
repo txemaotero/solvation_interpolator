@@ -64,7 +64,14 @@ def _calc_integral(x: np.ndarray, y: np.ndarray) -> float:
     integral = cumtrapz(y, x=x, initial=0)
     index_to_fit = _get_index_to_fit(integral)
     xf, yf = x[index_to_fit:], integral[index_to_fit:]
-    result = curve_fit(_to_fit, xf, yf, p0=(1, -1.2, -1))
+    result = curve_fit(
+        _to_fit,
+        xf,
+        yf,
+        p0=(1, -1.2, -1),
+        bounds=((-np.inf, -np.inf, -np.inf), (np.inf, -1, np.inf)),
+        maxfev=1e4,
+    )
     return result[0][-1]
 
 
@@ -191,6 +198,18 @@ class Information:
         """
         return self.data[key]
 
+    def keys(self) -> List[str]:
+        """
+        Get the labels of the systems.
+
+        Returns
+        -------
+        list
+            The labels of the systems.
+
+        """
+        return list(self.data.keys())
+
     def values(self) -> List[ItemType]:
         """
         Get the information for all the systems.
@@ -291,7 +310,7 @@ class Information:
             else:
                 aux_distances = system["cnrs"].distances
                 if (len(distances) != len(aux_distances)) or (
-                    not np.isclose(distances, aux_distances)
+                    not np.isclose(distances, aux_distances).all()
                 ):
                     raise ValueError("The cnr files should have the same distances")
         assert isinstance(distances, np.ndarray)
