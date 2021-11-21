@@ -3,6 +3,7 @@ Module with the utilities to parse the data from the json file with all the
 information needed to build the interpolation functions.
 """
 import json
+import os
 import numpy as np
 from scipy.integrate import cumtrapz
 from scipy.optimize import curve_fit
@@ -139,6 +140,9 @@ class Information:
         with open(self.filename, "r") as f:
             data = json.load(f, cls=Decoder)
 
+        # Change directory to admit relative paths
+        current_dir = os.path.abspath('.')
+        os.chdir(os.path.dirname(self.filename))
         # Check and parse the cnr part
         for label, system in data.items():
             if not all(k in system for k in ("cnrs", "Q", "ionic_radius")):
@@ -149,6 +153,7 @@ class Information:
                 )
             system["cnrs"] = CoordNumbers(label, system["cnrs"])
 
+        os.chdir(current_dir)
         return data
 
     def __getitem__(self, key: str) -> ItemType:

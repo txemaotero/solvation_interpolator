@@ -6,7 +6,7 @@ from typing import Callable, Dict
 import numpy as np
 from scipy.interpolate import interp2d, interp1d
 
-from parsers import Information, _calc_integral, FACTOR_ENERGY
+from parsers import Information, FACTOR_ENERGY
 
 
 class Interpolation:
@@ -17,6 +17,9 @@ class Interpolation:
     def __init__(self, information: Information, kind: str = "cubic"):
         self.information = information
         self.kind = kind
+        # Auxiliar information
+        self._min_len_cnrs: Dict[str, int] = {}
+        self._min_len_charge = 0
         # Preload distances
         self._distances = self.information.distances
         # One interpolator for each mol_type for cnrs
@@ -28,14 +31,12 @@ class Interpolation:
             self.information.ionic_radii,
             self.information.exclusion_radii,
             kind=self.kind,
-            fill_value="extrapolate",
         )
         # Interpolator for the electrostatic work to enthalpy
         self.electrostatic_work_to_enthalpy = interp1d(
             self.information.electrostatic_works,
             self.information.enthalpies,
             kind=self.kind,
-            fill_value="extrapolate",
         )
 
     def _get_cnr_interpolators(self) -> Dict[str, Callable[..., np.ndarray]]:
@@ -52,8 +53,9 @@ class Interpolation:
             for data in self.information.values():
                 cnr = data["cnrs"][mol_label].cnr
                 excl_radius = data["cnrs"].exclusion_radius
-                cnrs.append(cnr[distances > excl_radius])
+                cnrs.append(cnr[distances >= excl_radius])
             min_len = min([len(c) for c in cnrs])
+            self._min_len_cnrs[mol_label] = min_len
             cnrs = [c[:min_len] for c in cnrs]
             aux_distances = distances[:min_len]
 
@@ -62,7 +64,6 @@ class Interpolation:
                 electric_fields,
                 cnrs,
                 kind=self.kind,
-                fill_value="extrapolate",
             )
         return interpolators
 
@@ -76,8 +77,9 @@ class Interpolation:
         for data in self.information.values():
             tot_charg = data["cnrs"].total_charge_distribution
             exclusion_radius = data["cnrs"].exclusion_radius
-            tot_charg_dens.append(tot_charg[self._distances > exclusion_radius])
+            tot_charg_dens.append(tot_charg[self._distances >= exclusion_radius])
         min_len = min([len(c) for c in tot_charg_dens])
+        self._min_len_charge = min_len
         tot_charg_dens = [c[:min_len] for c in tot_charg_dens]
         aux_distances = self._distances[:min_len]
         return interp2d(
@@ -85,7 +87,6 @@ class Interpolation:
             electric_fields,
             tot_charg_dens,
             kind=self.kind,
-            fill_value="extrapolate",
         )
 
     def _shift_back(self, data: np.ndarray, exclusion_radius: float) -> np.ndarray:
@@ -95,13 +96,14 @@ class Interpolation:
         # Get the distances
         distances = self._distances
         # Get the index of the first point after the exclusion radius
-        index = np.where(distances > exclusion_radius)[0][0]
+        index = np.where(distances >= exclusion_radius)[0][0]
         # Shift the distribution and check the len to match distances
-        new_data = np.concatenate((np.zeros(index), data))[: len(self._distances)]
-        # Shorter length means we need to concatenate the last value to the end
+        new_data = np.concatenate((np.zeros(index-1), data))[: len(self._distances)]
+        # Shorter length means we need to concatenate zeros at the end
+        # We add zeros to not contribute to the charge distribution
         if len(new_data) < len(self._distances):
             diff = len(self._distances) - len(new_data)
-            new_data = np.concatenate((new_data, [new_data[-1]] * diff))
+            new_data = np.concatenate((new_data, np.zeros(diff)))
         return new_data
 
     def charge_distribution(self, ionic_radius: float, charge: float) -> np.ndarray:
@@ -122,7 +124,7 @@ class Interpolation:
         """
         # Get the interpolator
         interpolator = self._charge_interpolator
-        exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)
+        exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)[()]
         # Get the electric field
         e_field = charge / exclusion_radius ** 2
         charge_distr = interpolator(self._distances, e_field)
@@ -152,10 +154,11 @@ class Interpolation:
         """
         # Get the interpolator
         interpolator = self._cnr_interpolators[mol_label]
-        exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)
+        exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)[()]
         # Get the electric field
         e_field = charge / exclusion_radius ** 2
-        cnr = interpolator(self._distances, e_field)
+        aux_dist = self._distances[self._distances >= exclusion_radius][:self._min_len_cnrs[mol_label]]
+        cnr = interpolator(aux_dist, e_field)
         return self._shift_back(cnr, exclusion_radius)
 
     def electrostatic_work(self, ionic_radius: float, charge: float) -> float:
@@ -179,16 +182,17 @@ class Interpolation:
         """
         # Get the interpolator
         interpolator = self._charge_interpolator
-        exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)
+        exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)[()]
         # Get the electric field
         e_field = charge / exclusion_radius ** 2
         # Get the charge distribution
-        charge_distr = interpolator(self._distances, e_field)
+        aux_dist = self._distances[self._distances >= exclusion_radius][:self._min_len_charge]
+        charge_distr = interpolator(aux_dist, e_field)
         # Shift back the charge to the exclusion radius
         charge_distr = self._shift_back(charge_distr, exclusion_radius)
         # Get the electrostatic work
-        return FACTOR_ENERGY * _calc_integral(
-            self._distances, charge_distr / self._distances ** 2
+        return FACTOR_ENERGY * np.trapz(
+            x=self._distances, y=charge_distr / self._distances ** 2
         )
 
     def enthalpy(self, ionic_radius: float, charge: float) -> float:
