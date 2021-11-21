@@ -51,7 +51,7 @@ def _get_index_to_fit(data: np.ndarray) -> int:
     value to the one corresponding a variation under the 10% of the max value
     of data.
     """
-    variation = abs(max(data) - min(data)) * 0.1
+    variation = abs(max(data) - min(data)) * 0.05
     index = int(np.argmax(np.abs((data - data[-1])[::-1]) > variation))
     return len(data) - index
 
@@ -70,7 +70,7 @@ def _calc_integral(x: np.ndarray, y: np.ndarray) -> float:
         yf,
         p0=(1, -1.2, -1),
         bounds=((-np.inf, -np.inf, -np.inf), (np.inf, -1, np.inf)),
-        maxfev=1e4,
+        maxfev=10000,
     )
     return result[0][-1]
 

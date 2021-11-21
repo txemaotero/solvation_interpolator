@@ -173,7 +173,7 @@ def test_information(information: Information):
     assert isinstance(information.distances, np.ndarray)
     assert len(information.distances) == len(information["Li"]["cnrs"]["anion"].cnr)
     excl_rad = {k: v for k, v in zip(information.keys(), information.exclusion_radii)}
-    compare = {"Li": 0.186, "Na": 0.228}
+    compare = {"Li": 0.222, "Na": 0.266}
     assert excl_rad == compare
     assert round(information["Li"]["cnrs"].electrostatic_work) == -825
     assert round(information["Na"]["cnrs"].electrostatic_work) == -672
