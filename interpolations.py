@@ -96,7 +96,7 @@ class Interpolation:
         # Get the distances
         distances = self._distances
         # Get the index of the first point after the exclusion radius
-        index = np.where(distances >= exclusion_radius)[0][0]
+        index = np.argmax(distances >= exclusion_radius)
         # Shift the distribution and check the len to match distances
         new_data = np.concatenate((np.zeros(index-1), data))[: len(self._distances)]
         # Shorter length means we need to concatenate zeros at the end
@@ -127,7 +127,7 @@ class Interpolation:
         exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)[()]
         # Get the electric field
         e_field = charge / exclusion_radius ** 2
-        charge_distr = interpolator(self._distances, e_field)
+        charge_distr = interpolator(self._distances[:self._min_len_charge], e_field)
         # Shift back the charge to the exclusion radius
         return self._shift_back(charge_distr, exclusion_radius)
 
@@ -157,8 +157,7 @@ class Interpolation:
         exclusion_radius = self.ionic_radii_to_exclusion(ionic_radius)[()]
         # Get the electric field
         e_field = charge / exclusion_radius ** 2
-        aux_dist = self._distances[self._distances >= exclusion_radius][:self._min_len_cnrs[mol_label]]
-        cnr = interpolator(aux_dist, e_field)
+        cnr = interpolator(self._distances[:self._min_len_cnrs[mol_label]], e_field)
         return self._shift_back(cnr, exclusion_radius)
 
     def electrostatic_work(self, ionic_radius: float, charge: float) -> float:
@@ -186,8 +185,7 @@ class Interpolation:
         # Get the electric field
         e_field = charge / exclusion_radius ** 2
         # Get the charge distribution
-        aux_dist = self._distances[self._distances >= exclusion_radius][:self._min_len_charge]
-        charge_distr = interpolator(aux_dist, e_field)
+        charge_distr = interpolator(self._distances[:self._min_len_charge], e_field)
         # Shift back the charge to the exclusion radius
         charge_distr = self._shift_back(charge_distr, exclusion_radius)
         # Get the electrostatic work

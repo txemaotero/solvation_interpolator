@@ -31,12 +31,36 @@ def interpolation(information) -> Interpolation:
 
 
 def test_interpolation(interpolation: Interpolation, information: Information):
-    radius = interpolation.ionic_radii_to_exclusion(0.59)[()]
-    assert round(radius, 5) == 0.222
-    li_cnr = information["Li"]["cnrs"]["anion"].cnr
-    li_interp = interpolation.coordination_number(0.59, 1, "anion")
-    close = np.isclose(li_cnr, li_interp)
-    n_close = sum(close)
-    np.savetxt('test.txt', np.array((li_cnr, li_interp, close)).T)
-    assert close[:n_close].all()
-    assert not li_interp[n_close:].any()
+    for _, system in information.items():
+        radius = system['ionic_radius']
+        radius_int = interpolation.ionic_radii_to_exclusion(radius)[()]
+        assert round(radius_int, 5) == system['cnrs'].exclusion_radius
+
+        for key in ('anion', 'cation', 'metal'):
+            cnr = system["cnrs"][key].cnr
+            interp = interpolation.coordination_number(radius, system['Q'], key)
+            interp[interp<1e-10] = 0
+            # Admit difference of one bin
+            non_zero_cnr = np.nonzero(cnr)[0][0]
+            non_zero_interp = np.nonzero(interp)[0][0]
+            diff = abs(non_zero_cnr - non_zero_interp)
+            assert diff <= 1
+            last_non_zero_cnr = np.nonzero(cnr)[0][-1]
+            last_non_zero_interp = np.nonzero(interp)[0][-1]
+            compare = cnr[non_zero_cnr:last_non_zero_cnr]
+            compare_int = interp[non_zero_interp:last_non_zero_interp]
+            min_len = min(len(compare), len(compare_int))
+            assert np.allclose(compare[:min_len], compare_int[:min_len])
+
+        charge = system["cnrs"].total_charge_distribution
+        interp = interpolation.charge_distribution(radius, system['Q'])
+        non_zero_charge = np.nonzero(charge)[0][0]
+        non_zero_interp = np.nonzero(interp)[0][0]
+        diff = abs(non_zero_charge - non_zero_interp)
+        assert diff <= 1
+        last_non_zero_charge = np.nonzero(charge)[0][-1]
+        last_non_zero_interp = np.nonzero(interp)[0][-1]
+        compare = charge[non_zero_charge:last_non_zero_charge]
+        compare_int = interp[non_zero_interp:last_non_zero_interp]
+        min_len = min(len(compare), len(compare_int))
+        assert np.allclose(compare[:min_len], compare_int[:min_len])

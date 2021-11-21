@@ -197,6 +197,18 @@ class Information:
         """
         return list(self.data.values())
 
+    def items(self) -> List[Tuple[str, ItemType]]:
+        """
+        Get the information for all the systems.
+
+        Returns
+        -------
+        data : list
+            The information for all the systems.
+
+        """
+        return list(self.data.items())
+
     @property
     def headers(self) -> List[str]:
         """
