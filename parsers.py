@@ -45,36 +45,6 @@ FACTOR_ENERGY = (
 )
 
 
-def _get_index_to_fit(data: np.ndarray) -> int:
-    """
-    Get the index of the data to fit the integral going back from the last
-    value to the one corresponding a variation under the 10% of the max value
-    of data.
-    """
-    variation = abs(max(data) - min(data)) * 0.05
-    index = int(np.argmax(np.abs((data - data[-1])[::-1]) > variation))
-    return len(data) - index
-
-
-def _to_fit(x: np.ndarray, a: float, alpha: float, b: float) -> np.ndarray:
-    return a * x ** alpha + b
-
-
-def _calc_integral(x: np.ndarray, y: np.ndarray) -> float:
-    integral = cumtrapz(y, x=x, initial=0)
-    index_to_fit = _get_index_to_fit(integral)
-    xf, yf = x[index_to_fit:], integral[index_to_fit:]
-    result = curve_fit(
-        _to_fit,
-        xf,
-        yf,
-        p0=(1, -1.2, -1),
-        bounds=((-np.inf, -np.inf, -np.inf), (np.inf, -1, np.inf)),
-        maxfev=10000,
-    )
-    return result[0][-1]
-
-
 class Decoder(json.JSONDecoder):
     def decode(self, s: Any) -> Any:
         result = super().decode(s)
@@ -462,8 +432,8 @@ class CoordNumbers:
         Get the electrostatic work.
         """
         distances = self.distances
-        return FACTOR_ENERGY * _calc_integral(
-            distances, self.total_charge_distribution / distances ** 2
+        return FACTOR_ENERGY * np.trapz(
+            x=distances, y=self.total_charge_distribution / distances ** 2
         )
 
     @property
