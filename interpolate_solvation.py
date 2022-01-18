@@ -55,10 +55,10 @@ if __name__ == "__main__":
         for mol_label in information.mol_labels:
             data.append(interpolation.coordination_number(args.R, args.Q, mol_label))
             header.append(f"cnr({mol_label})")
-        header = '\t'.join(header)
-        np.savetxt(args.coord, np.array(data).T, header=header)
+        header_str = '\t'.join(header)
+        np.savetxt(args.coord, np.array(data).T, header=header_str)
 
     if args.charge is not None:
-        data = interpolation.charge_distribution(args.R, args.Q)
-        header = information.headers[0]
-        np.savetxt(args.charge, data, header=header)
+        data_charge = interpolation.charge_distribution(args.R, args.Q)
+        header_charge = information.headers[0]
+        np.savetxt(args.charge, data_charge, header=header_charge)
